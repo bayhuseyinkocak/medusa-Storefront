@@ -1,6 +1,7 @@
 "use server"
 
 import { sdk } from "@lib/config"
+import { PRODUCT_LISTING_FIELDS } from "@lib/constants/product-fields"
 import { sortProducts } from "@lib/util/sort-products"
 import { HttpTypes } from "@medusajs/types"
 import { SortOptions } from "@modules/store/components/refinement-list/sort-products"
@@ -59,12 +60,11 @@ export const listProducts = async ({
       {
         method: "GET",
         query: {
+          region_id: region?.id,
+          ...queryParams,
           limit,
           offset,
-          region_id: region?.id,
-          fields:
-            "*variants.calculated_price,+variants.inventory_quantity,*variants.images,+metadata,+tags,",
-          ...queryParams,
+          fields: queryParams?.fields ?? PRODUCT_LISTING_FIELDS,
         },
         headers,
         next,
@@ -86,51 +86,55 @@ export const listProducts = async ({
 }
 
 /**
- * This will fetch 100 products to the Next.js cache and sort them based on the sortBy parameter.
- * It will then return the paginated products based on the page and limit parameters.
+ * Paginated product listing using real API offset/limit.
+ * Price sorting applies to the current page only (MVP).
  */
-export const listProductsWithSort = async ({
-  page = 0,
+export const listProductsPaginated = async ({
+  page = 1,
+  limit = 12,
   queryParams,
   sortBy = "created_at",
   countryCode,
 }: {
   page?: number
-  queryParams?: HttpTypes.FindParams & HttpTypes.StoreProductParams
+  limit?: number
+  queryParams?: HttpTypes.FindParams & HttpTypes.StoreProductListParams
   sortBy?: SortOptions
   countryCode: string
 }): Promise<{
   response: { products: HttpTypes.StoreProduct[]; count: number }
   nextPage: number | null
-  queryParams?: HttpTypes.FindParams & HttpTypes.StoreProductParams
 }> => {
-  const limit = queryParams?.limit || 12
+  const apiQuery: HttpTypes.FindParams & HttpTypes.StoreProductListParams = {
+    ...queryParams,
+    limit,
+    fields: queryParams?.fields ?? PRODUCT_LISTING_FIELDS,
+  }
+
+  if (sortBy === "created_at") {
+    apiQuery.order = "created_at"
+  }
 
   const {
     response: { products, count },
+    nextPage,
   } = await listProducts({
-    pageParam: 0,
-    queryParams: {
-      ...queryParams,
-      limit: 100,
-    },
+    pageParam: page,
+    queryParams: apiQuery,
     countryCode,
   })
 
-  const sortedProducts = sortProducts(products, sortBy)
+  let sortedProducts = products
 
-  const pageParam = (page - 1) * limit
-
-  const nextPage = count > pageParam + limit ? pageParam + limit : null
-
-  const paginatedProducts = sortedProducts.slice(pageParam, pageParam + limit)
+  if (sortBy === "price_asc" || sortBy === "price_desc") {
+    sortedProducts = sortProducts(products, sortBy)
+  }
 
   return {
     response: {
-      products: paginatedProducts,
+      products: sortedProducts,
       count,
     },
     nextPage,
-    queryParams,
   }
 }

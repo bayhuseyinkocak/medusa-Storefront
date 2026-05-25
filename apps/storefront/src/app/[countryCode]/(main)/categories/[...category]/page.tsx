@@ -1,17 +1,20 @@
 import { Metadata } from "next"
 import { notFound } from "next/navigation"
 
+import { brand } from "@lib/brand"
 import { getCategoryByHandle, listCategories } from "@lib/data/categories"
 import { listRegions } from "@lib/data/regions"
 import { HttpTypes, StoreRegion } from "@medusajs/types"
 import CategoryTemplate from "@modules/categories/templates"
 import { SortOptions } from "@modules/store/components/refinement-list/sort-products"
+import { ViewMode } from "@modules/store/components/view-mode-toggle"
 
 type Props = {
   params: Promise<{ category: string[]; countryCode: string }>
   searchParams: Promise<{
     sortBy?: SortOptions
     page?: string
+    view?: ViewMode
   }>
 }
 
@@ -47,12 +50,12 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
   try {
     const productCategory = await getCategoryByHandle(params.category)
 
-    const title = productCategory.name + " | Medusa Store"
-
-    const description = productCategory.description ?? `${title} category.`
+    const title = `${productCategory.name} | ${brand.siteName}`
+    const description =
+      productCategory.description ?? `${productCategory.name} — ${brand.tagline}`
 
     return {
-      title: `${title} | Medusa Store`,
+      title,
       description,
       alternates: {
         canonical: `${params.category.join("/")}`,
@@ -66,7 +69,7 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
 export default async function CategoryPage(props: Props) {
   const searchParams = await props.searchParams
   const params = await props.params
-  const { sortBy, page } = searchParams
+  const { sortBy, page, view } = searchParams
 
   const productCategory = await getCategoryByHandle(params.category)
 
@@ -79,6 +82,7 @@ export default async function CategoryPage(props: Props) {
       category={productCategory}
       sortBy={sortBy}
       page={page}
+      view={view}
       countryCode={params.countryCode}
     />
   )

@@ -40,6 +40,11 @@ Ensure your Medusa backend allows the storefront origin:
 STORE_CORS=http://localhost:8000
 ```
 
+## Category listing
+
+- Layout, toolbar (sort / grid-list), and tires/wheels product cards: [`docs/category-listing.md`](docs/category-listing.md)
+- Example: http://localhost:8000/de/categories/tires
+
 ## Brand & theme
 
 - Brand copy: [`apps/storefront/src/lib/brand.ts`](apps/storefront/src/lib/brand.ts)

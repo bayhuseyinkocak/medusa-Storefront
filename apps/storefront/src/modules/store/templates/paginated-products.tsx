@@ -1,8 +1,11 @@
-import { listProductsWithSort } from "@lib/data/products"
+import { listProductsPaginated } from "@lib/data/products"
 import { getRegion } from "@lib/data/regions"
-import ProductPreview from "@modules/products/components/product-preview"
+import ProductCard from "@modules/products/components/product-card"
 import { Pagination } from "@modules/store/components/pagination"
+import ProductListingToolbar from "@modules/store/components/product-listing-toolbar"
+import { ViewMode } from "@modules/store/components/view-mode-toggle"
 import { SortOptions } from "@modules/store/components/refinement-list/sort-products"
+import { clx } from "@modules/common/components/ui"
 
 const PRODUCT_LIMIT = 12
 
@@ -19,18 +22,25 @@ export default async function PaginatedProducts({
   page,
   collectionId,
   categoryId,
+  categoryHandle,
   productsIds,
   countryCode,
+  view = "grid",
+  showToolbar = true,
 }: {
   sortBy?: SortOptions
   page: number
   collectionId?: string
   categoryId?: string
+  categoryHandle?: string
   productsIds?: string[]
   countryCode: string
+  view?: ViewMode
+  showToolbar?: boolean
 }) {
+  const sort = sortBy || "created_at"
   const queryParams: PaginatedProductsParams = {
-    limit: 12,
+    limit: PRODUCT_LIMIT,
   }
 
   if (collectionId) {
@@ -45,10 +55,6 @@ export default async function PaginatedProducts({
     queryParams["id"] = productsIds
   }
 
-  if (sortBy === "created_at") {
-    queryParams["order"] = "created_at"
-  }
-
   const region = await getRegion(countryCode)
 
   if (!region) {
@@ -57,28 +63,42 @@ export default async function PaginatedProducts({
 
   const {
     response: { products, count },
-  } = await listProductsWithSort({
+  } = await listProductsPaginated({
     page,
+    limit: PRODUCT_LIMIT,
     queryParams,
-    sortBy,
+    sortBy: sort,
     countryCode,
   })
 
   const totalPages = Math.ceil(count / PRODUCT_LIMIT)
+  const isList = view === "list"
 
   return (
     <>
+      {showToolbar && (
+        <ProductListingToolbar count={count} sortBy={sort} view={view} />
+      )}
       <ul
-        className="grid grid-cols-2 w-full small:grid-cols-3 medium:grid-cols-4 gap-x-6 gap-y-8"
+        className={clx(
+          "w-full",
+          isList
+            ? "flex flex-col gap-4"
+            : "grid grid-cols-2 gap-x-6 gap-y-8 small:grid-cols-3 medium:grid-cols-4"
+        )}
         data-testid="products-list"
       >
-        {products.map((p) => {
-          return (
-            <li key={p.id}>
-              <ProductPreview product={p} region={region} />
-            </li>
-          )
-        })}
+        {products.map((p) => (
+          <li key={p.id} className={clx(isList && "w-full")}>
+            <ProductCard
+              product={p}
+              region={region}
+              categoryHandle={categoryHandle}
+              view={view}
+              isFeatured={!isList}
+            />
+          </li>
+        ))}
       </ul>
       {totalPages > 1 && (
         <Pagination
