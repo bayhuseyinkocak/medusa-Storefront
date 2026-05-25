@@ -1,29 +1,32 @@
-import { listCategories } from "@lib/data/categories";
-import { listCollections } from "@lib/data/collections";
-import { Text, clx } from "@modules/common/components/ui";
+import { brand } from "@lib/brand"
+import { listCategories } from "@lib/data/categories"
+import { listCollections } from "@lib/data/collections"
+import { Text, clx } from "@modules/common/components/ui"
 
-import LocalizedClientLink from "@modules/common/components/localized-client-link";
-import MedusaCTA from "@modules/layout/components/medusa-cta";
+import LocalizedClientLink from "@modules/common/components/localized-client-link"
 
 export default async function Footer() {
   const { collections } = await listCollections({
     fields: "*products",
-  });
-  const productCategories = await listCategories();
+  })
+  const productCategories = await listCategories()
 
   return (
-    <footer className="border-t border-ui-border-base w-full">
-      <div className="content-container flex flex-col w-full">
-        <div className="flex flex-col gap-y-6 xsmall:flex-row items-start justify-between py-40">
-          <div>
+    <footer className="w-full border-t border-ui-border-base bg-ui-bg-subtle">
+      <div className="content-container flex w-full flex-col">
+        <div className="flex flex-col items-start justify-between gap-y-8 py-24 xsmall:flex-row">
+          <div className="max-w-xs flex flex-col gap-y-3">
             <LocalizedClientLink
               href="/"
-              className="txt-compact-xlarge-plus text-ui-fg-subtle hover:text-ui-fg-base uppercase"
+              className="txt-compact-xlarge-plus uppercase text-ui-fg-base hover:text-ui-fg-interactive transition-colors"
             >
-              Medusa Store
+              {brand.siteName}
             </LocalizedClientLink>
+            <Text className="text-ui-fg-subtle text-small-regular">
+              {brand.footer.tagline}
+            </Text>
           </div>
-          <div className="text-small-regular gap-10 md:gap-x-16 grid grid-cols-2 sm:grid-cols-3">
+          <div className="text-small-regular grid grid-cols-2 gap-10 sm:grid-cols-3 md:gap-x-16">
             {productCategories && productCategories?.length > 0 && (
               <div className="flex flex-col gap-y-2">
                 <span className="txt-small-plus txt-ui-fg-base">
@@ -35,7 +38,7 @@ export default async function Footer() {
                 >
                   {productCategories?.slice(0, 6).map((c) => {
                     if (c.parent_category) {
-                      return;
+                      return
                     }
 
                     const children =
@@ -43,7 +46,7 @@ export default async function Footer() {
                         name: child.name,
                         handle: child.handle,
                         id: child.id,
-                      })) || null;
+                      })) || null
 
                     return (
                       <li
@@ -52,7 +55,7 @@ export default async function Footer() {
                       >
                         <LocalizedClientLink
                           className={clx(
-                            "hover:text-ui-fg-base",
+                            "hover:text-ui-fg-interactive transition-colors",
                             children && "txt-small-plus"
                           )}
                           href={`/categories/${c.handle}`}
@@ -61,12 +64,12 @@ export default async function Footer() {
                           {c.name}
                         </LocalizedClientLink>
                         {children && (
-                          <ul className="grid grid-cols-1 ml-3 gap-2">
+                          <ul className="ml-3 grid grid-cols-1 gap-2">
                             {children &&
                               children.map((child) => (
                                 <li key={child.id}>
                                   <LocalizedClientLink
-                                    className="hover:text-ui-fg-base"
+                                    className="hover:text-ui-fg-interactive transition-colors"
                                     href={`/categories/${child.handle}`}
                                     data-testid="category-link"
                                   >
@@ -77,7 +80,7 @@ export default async function Footer() {
                           </ul>
                         )}
                       </li>
-                    );
+                    )
                   })}
                 </ul>
               </div>
@@ -98,7 +101,7 @@ export default async function Footer() {
                   {collections?.slice(0, 6).map((c) => (
                     <li key={c.id}>
                       <LocalizedClientLink
-                        className="hover:text-ui-fg-base"
+                        className="hover:text-ui-fg-interactive transition-colors"
                         href={`/collections/${c.handle}`}
                       >
                         {c.title}
@@ -109,49 +112,29 @@ export default async function Footer() {
               </div>
             )}
             <div className="flex flex-col gap-y-2">
-              <span className="txt-small-plus txt-ui-fg-base">Medusa</span>
+              <span className="txt-small-plus txt-ui-fg-base">Company</span>
               <ul className="grid grid-cols-1 gap-y-2 text-ui-fg-subtle txt-small">
-                <li>
-                  <a
-                    href="https://github.com/medusajs"
-                    target="_blank"
-                    rel="noreferrer"
-                    className="hover:text-ui-fg-base"
-                  >
-                    GitHub
-                  </a>
-                </li>
-                <li>
-                  <a
-                    href="https://docs.medusajs.com"
-                    target="_blank"
-                    rel="noreferrer"
-                    className="hover:text-ui-fg-base"
-                  >
-                    Documentation
-                  </a>
-                </li>
-                <li>
-                  <a
-                    href="https://github.com/medusajs/dtc-starter"
-                    target="_blank"
-                    rel="noreferrer"
-                    className="hover:text-ui-fg-base"
-                  >
-                    Source code
-                  </a>
-                </li>
+                {brand.footer.links.map((link) => (
+                  <li key={link.label}>
+                    <LocalizedClientLink
+                      href={link.href}
+                      className="hover:text-ui-fg-interactive transition-colors"
+                    >
+                      {link.label}
+                    </LocalizedClientLink>
+                  </li>
+                ))}
               </ul>
             </div>
           </div>
         </div>
-        <div className="flex w-full mb-16 justify-between text-ui-fg-muted">
+        <div className="mb-12 flex w-full justify-center border-t border-ui-border-base pt-8 text-ui-fg-muted">
           <Text className="txt-compact-small">
-            © {new Date().getFullYear()} Medusa Store. All rights reserved.
+            © {new Date().getFullYear()} {brand.footer.copyrightName}. All
+            rights reserved.
           </Text>
-          <MedusaCTA />
         </div>
       </div>
     </footer>
-  );
+  )
 }

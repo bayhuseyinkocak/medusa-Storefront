@@ -2,6 +2,51 @@
 @import "tailwindcss/components";
 @import "tailwindcss/utilities";
 
+/* Slate + rose brand tokens (Medusa ui-preset overrides) */
+:root {
+  --bg-base: #ffffff;
+  --bg-subtle: #f8fafc;
+  --bg-subtle-hover: #f1f5f9;
+  --bg-base-hover: #f1f5f9;
+  --bg-component: #f8fafc;
+  --bg-component-hover: #f1f5f9;
+  --bg-field: #f8fafc;
+  --bg-field-hover: #f1f5f9;
+  --fg-base: #0f172a;
+  --fg-subtle: #475569;
+  --fg-muted: #64748b;
+  --fg-interactive: #e11d48;
+  --fg-interactive-hover: #be123c;
+  --border-base: #e2e8f0;
+  --border-strong: #cbd5e1;
+  --border-interactive: #f43f5e;
+  --bg-interactive: #e11d48;
+  --fg-error: #e11d48;
+  --border-error: #fda4af;
+}
+
+.dark {
+  --bg-base: #0f172a;
+  --bg-subtle: #020617;
+  --bg-subtle-hover: #0f172a;
+  --bg-base-hover: #1e293b;
+  --bg-component: #1e293b;
+  --bg-component-hover: #334155;
+  --bg-field: rgba(255, 255, 255, 0.04);
+  --bg-field-hover: rgba(255, 255, 255, 0.08);
+  --fg-base: #f1f5f9;
+  --fg-subtle: #94a3b8;
+  --fg-muted: #64748b;
+  --fg-interactive: #fb7185;
+  --fg-interactive-hover: #fda4af;
+  --border-base: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.16);
+  --border-interactive: #fb7185;
+  --bg-interactive: #e11d48;
+  --fg-error: #fb7185;
+  --border-error: #f43f5e;
+}
+
 @layer utilities {
   /* Chrome, Safari and Opera */
   .no-scrollbar::-webkit-scrollbar {
@@ -55,7 +100,7 @@
   }
 
   .contrast-btn {
-    @apply px-4 py-2 border border-black rounded-full hover:bg-black hover:text-white transition-colors duration-200 ease-in;
+    @apply px-4 py-2 border border-rose-600 text-rose-700 rounded-full hover:bg-rose-600 hover:text-white transition-colors duration-200 ease-in dark:border-rose-500 dark:text-rose-400 dark:hover:bg-rose-600 dark:hover:text-white;
   }
 
   .text-xsmall-regular {

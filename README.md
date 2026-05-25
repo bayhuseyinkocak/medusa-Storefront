@@ -27,7 +27,7 @@ Configure `apps/storefront/.env.local`:
 |----------|-------------|
 | `NEXT_PUBLIC_MEDUSA_BACKEND_URL` | Medusa API URL (default `http://localhost:9000`) |
 | `NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY` | Publishable API key from Medusa Admin |
-| `NEXT_PUBLIC_DEFAULT_REGION` | Default region country code (e.g. `en`) |
+| `NEXT_PUBLIC_DEFAULT_REGION` | Default market country code (e.g. `de` for Germany) |
 | `NEXT_PUBLIC_BASE_URL` | Storefront URL (default `http://localhost:8000`) |
 
 Get the publishable key from Admin → Settings → API Key Management.
@@ -39,6 +39,13 @@ Ensure your Medusa backend allows the storefront origin:
 ```bash
 STORE_CORS=http://localhost:8000
 ```
+
+## Brand & theme
+
+- Brand copy: [`apps/storefront/src/lib/brand.ts`](apps/storefront/src/lib/brand.ts)
+- Colors: slate + rose tokens in [`apps/storefront/src/styles/globals.css`](apps/storefront/src/styles/globals.css)
+- Dark/light mode: header theme toggle (`next-themes`)
+- Region & i18n notes: [`docs/brand-i18n.md`](docs/brand-i18n.md)
 
 ## Agent configuration
 

@@ -83,10 +83,12 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         disabled={disabled || isLoading}
         className={clsx(
           "inline-flex gap-2 items-center justify-center rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
-          variant === "primary" && "bg-black text-white hover:bg-gray-800",
+          variant === "primary" &&
+            "bg-rose-600 text-white hover:bg-rose-700 focus-visible:ring-rose-500/50 dark:bg-rose-500 dark:hover:bg-rose-600",
           variant === "secondary" &&
-            "bg-white text-black border border-gray-200 hover:bg-gray-50",
-          variant === "transparent" && "bg-transparent hover:bg-gray-100",
+            "bg-white text-slate-900 border border-slate-200 hover:bg-slate-50 dark:bg-slate-900 dark:text-slate-100 dark:border-slate-700 dark:hover:bg-slate-800",
+          variant === "transparent" &&
+            "bg-transparent hover:bg-slate-100 dark:hover:bg-slate-800",
           size === "small" && "h-8 px-3 text-sm",
           size === "medium" && "h-10 px-4",
           size === "large" && "h-12 px-6 text-lg",
@@ -109,7 +111,10 @@ export const Container = forwardRef<HTMLDivElement, ContainerProps>(
     return (
       <div
         ref={ref}
-        className={clsx("bg-white rounded-lg p-4", className)}
+        className={clsx(
+          "rounded-lg bg-ui-bg-base p-4 border border-ui-border-base",
+          className
+        )}
         {...props}
       >
         {children}
@@ -221,7 +226,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
         <input
           ref={ref}
           className={clsx(
-            "flex h-10 w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
+            "flex h-10 w-full rounded-md border border-ui-border-base bg-ui-bg-field px-3 py-2 text-sm text-ui-fg-base placeholder:text-ui-fg-muted focus:outline-none focus:ring-2 focus:ring-rose-500/50 focus:ring-offset-2 focus:ring-offset-ui-bg-base disabled:cursor-not-allowed disabled:opacity-50",
             className
           )}
           {...props}
