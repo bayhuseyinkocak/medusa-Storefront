@@ -5,6 +5,7 @@ import {
   getEuTireLabel,
   getPriceCategory,
   getProductMetadataValue,
+  getProductVariantOptions,
   isEvTire,
 } from "@lib/util/product-metadata"
 import { HttpTypes } from "@medusajs/types"
@@ -36,10 +37,17 @@ export default function TireProductCard({
   const showEvBadge = isEvTire(product)
   const isList = view === "list"
   const productHref = `/products/${product.handle}`
+  const options = getProductVariantOptions(product)
+  const option1 = options[0]?.values[0]
+  console.log('options', options)
+  console.log('option1', option1)
+  console.log('options_x', product.options)
+console.log('variant options_x', product.variants?.[0]?.options)
+console.log('product', product)
 
   const imageBlock = (
-    <div className="relative w-full px-3 pt-3">
-      <div className="absolute left-3 top-3 z-10">
+    <div className="relative w-full">
+      <div className="absolute right-0 top-1 z-10">
         {priceCategory && <PriceCategoryBadge category={priceCategory} />}
       </div>
       {showEvBadge && (
@@ -51,27 +59,28 @@ export default function TireProductCard({
         <Thumbnail
           thumbnail={product.thumbnail}
           images={product.images}
-          size="full"
+          size="square"
           isFeatured={false}
-          className="mx-auto aspect-square h-28 max-h-28 w-full max-w-[11rem] border-0 bg-transparent p-1 shadow-none"
-          data-testid="product-image"
+          className="mx-auto aspect-square h-[200px] max-h-[200px] w-full max-w-[200px] border-0 bg-transparent p-1 shadow-none"
+          data-testid="product-image" 
         />
       </LocalizedClientLink>
+      {brand && <BrandLogo brand={brand} className="absolute left-2 bottom-4 bg-white/80" />}
     </div>
   )
 
   const infoBlock = (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-2 mt-2">
       <LocalizedClientLink href={productHref} className="group/title space-y-1">
-        {brand && <BrandLogo brand={brand} />}
+        
         <Text
-          className="text-sm font-semibold text-ui-fg-base transition-colors group-hover/title:text-rose-600 dark:group-hover/title:text-rose-400 line-clamp-2"
+          className="text-sm font-bold text-slate-800 transition-colors group-hover/title:text-rose-600 dark:group-hover/title:text-rose-400 line-clamp-2"
           data-testid="product-title"
         >
-          {model || product.title}
+          {brand && <span className="">{brand}</span>} {model || product.title}
         </Text>
         {size && (
-          <Text className="txt-compact-small text-ui-fg-subtle">{size}</Text>
+          <Text className="text-sm font-semibold text-slate-700">{option1 || size}</Text>
         )}
       </LocalizedClientLink>
 
@@ -114,10 +123,11 @@ export default function TireProductCard({
   if (isList) {
     return (
       <article
-        data-testid="product-wrapper"
+        id={`tire-product-card-list-${product.id}`}
+        data-testid="product-wrapper-list"
         className={clx(
-          "flex w-full flex-col gap-3 rounded-large border border-ui-border-base bg-ui-bg-base p-3 transition-all duration-200",
-          "hover:border-rose-200/60 hover:shadow-elevation-card-hover dark:hover:border-rose-800/40",
+          "flex w-full flex-col gap-3 rounded-md border border-ui-border-base bg-ui-bg-base p-3 transition-all duration-200",
+          "hover:border-slate-200/60 hover:shadow-elevation-card-hover dark:hover:border-slate-800/40",
           "small:flex-row small:items-stretch"
         )}
       >
@@ -150,10 +160,11 @@ export default function TireProductCard({
 
   return (
     <article
+      id={`tire-product-card-grid-${product.id}`}
       data-testid="product-wrapper"
       className={clx(
-        "flex h-full flex-col overflow-hidden rounded-large border border-ui-border-base bg-ui-bg-base transition-all duration-200",
-        "hover:border-rose-200/60 hover:shadow-elevation-card-hover dark:hover:border-rose-800/40"
+        "flex h-full flex-col overflow-hidden rounded-md border border-ui-border-base bg-ui-bg-base transition-all duration-200",
+        "hover:border-slate-200/60 hover:shadow-elevation-card-hover dark:hover:border-slate-800/40"
       )}
     >
       {imageBlock}

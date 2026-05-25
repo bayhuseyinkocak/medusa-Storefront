@@ -16,9 +16,9 @@ export default function BrandLogo({ brand, className }: BrandLogoProps) {
 
   if (!brand || failed) {
     return (
-      <span className={clx("txt-compact-small text-ui-fg-muted", className)}>
-        {slug}
-      </span>
+        <span className={clx("txt-compact-small text-ui-fg-muted", className)}>
+          {slug}
+        </span>
     )
   }
 
@@ -28,7 +28,7 @@ export default function BrandLogo({ brand, className }: BrandLogoProps) {
       alt={`${brand} logo`}
       width={120}
       height={32}
-      className={clx("h-7 w-auto max-w-[7.5rem] object-contain object-left", className)}
+      className={clx("h-7 w-auto max-w-[100px] object-contain object-left", className)}
       onError={() => setFailed(true)}
       unoptimized
     />

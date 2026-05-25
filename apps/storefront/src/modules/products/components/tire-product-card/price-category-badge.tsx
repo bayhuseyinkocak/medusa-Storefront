@@ -35,7 +35,7 @@ export default function PriceCategoryBadge({
   return (
     <span
       className={clx(
-        "inline-block rounded-r-md border-l-4 px-2.5 py-1 text-xs font-semibold uppercase tracking-wide shadow-sm",
+        "inline-block rounded-l-md border-l-4 px-1 py-1 text-[10px] font-semibold uppercase shadow-sm",
         style,
         className
       )}

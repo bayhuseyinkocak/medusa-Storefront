@@ -56,6 +56,67 @@ export const getProductMetadataValue = (
   return getVariantMetadataValue(targetVariant, key)
 }
 
+/**
+ * Returns all product options as an array, preserving their id, title, and possible values.
+ */
+export const getProductVariantOptions = (
+  product: HttpTypes.StoreProduct
+): Array<{ id: string; title: string; values: string[] }> => {
+  return (
+    product.options?.map((option) => ({
+      id: option.id,
+      title: option.title,
+      values: option.values?.map((v) => v.value) ?? [],
+    })) ?? []
+  )
+}
+
+/**
+ * Returns the string value of the nth option (optionIndex) for the given variant (or the cheapest).
+ * If the variant or its options is not found, returns an empty string.
+ */
+export const getProductVariantOptionValue = (
+  product: HttpTypes.StoreProduct,
+  optionIndex: number,
+  variant?: HttpTypes.StoreProductVariant
+): string => {
+  const targetVariant = variant ?? getCheapestVariant(product)
+  if (!targetVariant?.options || typeof optionIndex !== "number") {
+    return ""
+  }
+  // Return the value of the nth option on the target variant
+  return targetVariant.options[optionIndex]?.value ?? ""
+}
+
+/**
+ * Returns the value of the specified option key (e.g., "color") for the given variant (or the cheapest).
+ * If not found, returns an empty string.
+ */
+export const getProductVariantOptionKey = (
+  product: HttpTypes.StoreProduct,
+  key: string,
+  variant?: HttpTypes.StoreProductVariant
+): string => {
+  const targetVariant = variant ?? getCheapestVariant(product)
+  if (!targetVariant?.options?.length || !product.options?.length) {
+    return ""
+  }
+  // Find the product option by title, case-insensitive match
+  const productOption = product.options.find(
+    (option) => option.title?.toLowerCase() === key.toLowerCase()
+  )
+  if (!productOption) {
+    return ""
+  }
+  // Find the matching variant option and return its value
+  const vOpt = targetVariant.options.find(
+    (option) => option.option_id === productOption.id
+  )
+  return vOpt?.value ?? ""
+}
+
+
+
 export const getPriceCategory = (
   product: HttpTypes.StoreProduct
 ): string => {
