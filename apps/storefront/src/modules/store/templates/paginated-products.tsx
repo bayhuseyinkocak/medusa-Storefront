@@ -73,6 +73,7 @@ export default async function PaginatedProducts({
 
   const totalPages = Math.ceil(count / PRODUCT_LIMIT)
   const isList = view === "list"
+  const isTiresCategory = categoryHandle === "tires"
 
   return (
     <>
@@ -84,7 +85,9 @@ export default async function PaginatedProducts({
           "w-full",
           isList
             ? "flex flex-col gap-4"
-            : "grid grid-cols-2 gap-x-6 gap-y-8 small:grid-cols-3 medium:grid-cols-4"
+            : isTiresCategory
+              ? "grid grid-cols-1 gap-x-4 gap-y-6 xsmall:grid-cols-2 medium:grid-cols-3"
+              : "grid grid-cols-2 gap-x-6 gap-y-8 small:grid-cols-3 medium:grid-cols-4"
         )}
         data-testid="products-list"
       >

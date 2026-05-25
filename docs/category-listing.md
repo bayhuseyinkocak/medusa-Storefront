@@ -7,7 +7,7 @@
 - URL params: `sortBy`, `page`, `view` (`grid` | `list`, default `grid`)
 - Real API pagination (`limit=12`, `offset`) — no more bulk fetch of 100 products
 - Category-specific product cards:
-  - `tires` → `TireProductCard` — large image, `price_category` badge (parent metadata), EV icon when variant `extra` contains `EV`, EU tire label row (`fuel_efficiency`, `wet_grip`, `noise_class`, `noise_level` from cheapest variant), prominent price with sale discount, rose **Choose tire** CTA
+  - `tires` → `TireProductCard` — 3-column grid (`medium`), compact tire image, brand logo from `cdn.alfatires.eu/logos/brands/{brand}.webp`, `price_category` badge, EV icon, EU tire label row, price + rose **Choose tire** CTA
   - `wheels` / `felgen` → `WheelProductCard`
   - other → default `ProductPreview`
 - Lighter category/collection API fields (no `*products` expansion)

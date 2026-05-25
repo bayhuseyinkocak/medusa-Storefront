@@ -11,6 +11,7 @@ import { HttpTypes } from "@medusajs/types"
 import LocalizedClientLink from "@modules/common/components/localized-client-link"
 import { Text, clx } from "@modules/common/components/ui"
 import Thumbnail from "@modules/products/components/thumbnail"
+import BrandLogo from "./brand-logo"
 import EuTireLabel from "./eu-tire-label"
 import EvTireBadge from "./ev-tire-badge"
 import PriceCategoryBadge from "./price-category-badge"
@@ -37,13 +38,13 @@ export default function TireProductCard({
   const productHref = `/products/${product.handle}`
 
   const imageBlock = (
-    <div className="relative w-full">
-      <div className="absolute left-0 top-0 z-10">
+    <div className="relative w-full px-3 pt-3">
+      <div className="absolute left-3 top-3 z-10">
         {priceCategory && <PriceCategoryBadge category={priceCategory} />}
       </div>
       {showEvBadge && (
-        <div className="absolute right-2 top-2 z-10">
-          <EvTireBadge />
+        <div className="absolute right-3 top-3 z-10">
+          <EvTireBadge className="h-7 w-7 [&_svg]:h-4 [&_svg]:w-4" />
         </div>
       )}
       <LocalizedClientLink href={productHref} className="block">
@@ -52,7 +53,7 @@ export default function TireProductCard({
           images={product.images}
           size="full"
           isFeatured={false}
-          className="aspect-[4/3] w-full border-0 p-2 shadow-none group-hover:shadow-none"
+          className="mx-auto aspect-square h-28 max-h-28 w-full max-w-[11rem] border-0 bg-transparent p-1 shadow-none"
           data-testid="product-image"
         />
       </LocalizedClientLink>
@@ -61,54 +62,46 @@ export default function TireProductCard({
 
   const infoBlock = (
     <div className="flex flex-col gap-2">
-      <LocalizedClientLink href={productHref} className="group/title">
-        {brand && (
-          <Text className="txt-compact-small-plus font-bold uppercase tracking-wide text-ui-fg-base">
-            {brand}
-          </Text>
-        )}
+      <LocalizedClientLink href={productHref} className="group/title space-y-1">
+        {brand && <BrandLogo brand={brand} />}
         <Text
-          className="font-semibold text-ui-fg-base transition-colors group-hover/title:text-rose-600 dark:group-hover/title:text-rose-400 line-clamp-2"
+          className="text-sm font-semibold text-ui-fg-base transition-colors group-hover/title:text-rose-600 dark:group-hover/title:text-rose-400 line-clamp-2"
           data-testid="product-title"
         >
           {model || product.title}
         </Text>
         {size && (
-          <Text className="txt-compact-medium text-ui-fg-subtle">{size}</Text>
+          <Text className="txt-compact-small text-ui-fg-subtle">{size}</Text>
         )}
       </LocalizedClientLink>
 
       {season && (
         <div className="flex items-center gap-1.5">
           <SeasonDot season={season} />
-          <Text className="txt-compact-small text-ui-fg-muted capitalize">
+          <Text className="txt-compact-small text-ui-fg-muted">
             {formatSeasonLabel(season)} tire
           </Text>
         </div>
       )}
 
-      {euLabel && <EuTireLabel label={euLabel} compact={isList} />}
+      {euLabel && <EuTireLabel label={euLabel} compact />}
 
-      <div
-        className={clx(
-          "flex items-end gap-3 border-t border-ui-border-base pt-3",
-          isList ? "justify-between" : "flex-col items-stretch sm:flex-row sm:items-end sm:justify-between"
-        )}
-      >
-        {cheapestPrice && (
+      <div className="flex items-center justify-between gap-2 border-t border-ui-border-base pt-2.5">
+        {cheapestPrice ? (
           <TireCardPrice
             price={cheapestPrice}
-            align={isList ? "left" : "right"}
-            size={isList ? "default" : "large"}
+            align="left"
+            size="default"
           />
+        ) : (
+          <span />
         )}
         <LocalizedClientLink
           href={productHref}
           className={clx(
-            "inline-flex w-full items-center justify-center rounded-md bg-rose-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors",
+            "inline-flex shrink-0 items-center justify-center rounded-md bg-rose-600 px-3 py-2 text-xs font-semibold text-white transition-colors",
             "hover:bg-rose-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-rose-600",
-            "dark:bg-rose-600 dark:hover:bg-rose-500",
-            !isList && "sm:w-auto sm:min-w-[10rem]"
+            "dark:bg-rose-600 dark:hover:bg-rose-500"
           )}
           data-testid="choose-tire-cta"
         >
@@ -123,20 +116,20 @@ export default function TireProductCard({
       <article
         data-testid="product-wrapper"
         className={clx(
-          "flex w-full flex-col gap-4 rounded-large border border-ui-border-base bg-ui-bg-base p-4 transition-all duration-200",
+          "flex w-full flex-col gap-3 rounded-large border border-ui-border-base bg-ui-bg-base p-3 transition-all duration-200",
           "hover:border-rose-200/60 hover:shadow-elevation-card-hover dark:hover:border-rose-800/40",
           "small:flex-row small:items-stretch"
         )}
       >
-        <div className="relative w-full shrink-0 small:max-w-[12rem]">
+        <div className="relative w-full shrink-0 small:max-w-[9rem]">
           {priceCategory && (
             <div className="absolute left-0 top-0 z-10">
               <PriceCategoryBadge category={priceCategory} />
             </div>
           )}
           {showEvBadge && (
-            <div className="absolute right-2 top-2 z-10">
-              <EvTireBadge />
+            <div className="absolute right-1 top-1 z-10">
+              <EvTireBadge className="h-7 w-7 [&_svg]:h-4 [&_svg]:w-4" />
             </div>
           )}
           <LocalizedClientLink href={productHref} className="block">
@@ -145,7 +138,7 @@ export default function TireProductCard({
               images={product.images}
               size="square"
               isFeatured={false}
-              className="w-full small:w-48"
+              className="mx-auto h-28 w-28 border-0 p-1 shadow-none"
               data-testid="product-image"
             />
           </LocalizedClientLink>
@@ -160,11 +153,11 @@ export default function TireProductCard({
       data-testid="product-wrapper"
       className={clx(
         "flex h-full flex-col overflow-hidden rounded-large border border-ui-border-base bg-ui-bg-base transition-all duration-200",
-        "hover:-translate-y-0.5 hover:border-rose-200/60 hover:shadow-elevation-card-hover dark:hover:border-rose-800/40"
+        "hover:border-rose-200/60 hover:shadow-elevation-card-hover dark:hover:border-rose-800/40"
       )}
     >
       {imageBlock}
-      <div className="flex flex-1 flex-col gap-3 p-4">{infoBlock}</div>
+      <div className="flex flex-1 flex-col gap-2 px-3 pb-3">{infoBlock}</div>
     </article>
   )
 }
@@ -180,7 +173,7 @@ function SeasonDot({ season }: { season: string }) {
 
   return (
     <span
-      className={clx("inline-block h-2.5 w-2.5 shrink-0 rounded-full", color)}
+      className={clx("inline-block h-2 w-2 shrink-0 rounded-full", color)}
       aria-hidden
     />
   )

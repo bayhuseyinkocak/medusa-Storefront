@@ -49,6 +49,7 @@ Canonical agent config: `ai/`
 |-------|-------------|
 | `dev-toolkit` | CLI commands for this Medusa project |
 | `medusa-dev` | Medusa backend, admin, storefront development (vendor) |
+| `nextjs-react-expert` and  `nodejs-best-practices` | for nextjs |
 
 Vendor skills are pulled to `ai/skills/vendor/medusa-dev/` via `ide-agent pull-skills`.
 
