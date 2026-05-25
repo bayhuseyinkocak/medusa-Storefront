@@ -1,0 +1,25 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Next.js storefront
+apps/storefront/.next/
+apps/storefront/out/
+
+# Environment & secrets
+.env
+.env.local
+.env.*.local
+**/.env.local
+
+# Build / logs
+*.log
+.DS_Store
+.idea/
+
+# ide-agent cache (regenerate with pull-skills)
+.ide-agent/
+.agents/
+.claude/
+.cursor/
+.github/

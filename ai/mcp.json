@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "ide-agent": {
+      "command": "npx",
+      "args": ["-y", "@ide-agent/mcp-server"],
+      "env": {
+        "IDE_AGENT_PROJECT_ROOT": "${workspaceFolder}"
+      }
+    }
+  }
+}

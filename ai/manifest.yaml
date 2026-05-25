@@ -1,0 +1,26 @@
+version: 1
+profile: medusa
+project:
+  name: "storefront-2"
+  stack:
+    - medusa
+    - typescript
+    - react
+    - node
+sources:
+  skills:
+    - type: local
+    - type: git
+      repo: medusajs/medusa-agent-skills
+      branch: main
+      include:
+        - plugins/medusa-dev/skills/**
+      target: ai/skills/vendor/medusa-dev
+ides:
+  cursor: true
+  claude: true
+  antigravity: true
+  copilot: true
+sync:
+  strategy: symlink
+  preserve_local: []
