@@ -1,7 +1,10 @@
 "use server"
 
 import { sdk } from "@lib/config"
-import { PRODUCT_LISTING_FIELDS } from "@lib/constants/product-fields"
+import {
+  PRODUCT_LISTING_FIELDS,
+  TIRE_CATALOG_FIELDS,
+} from "@lib/constants/product-fields"
 import { sortProducts } from "@lib/util/sort-products"
 import { HttpTypes } from "@medusajs/types"
 import { SortOptions } from "@modules/store/components/refinement-list/sort-products"
@@ -139,12 +142,84 @@ export const listProductsPaginated = async ({
   }
 }
 
-const CATEGORY_CATALOG_BATCH_SIZE = 100
+const CATEGORY_CATALOG_BATCH_SIZE = 200
 const CATEGORY_CATALOG_MAX_PAGES = 50
 
+const fetchAllCategoryProducts = async ({
+  countryCode,
+  categoryId,
+  batchSize,
+}: {
+  countryCode: string
+  categoryId: string
+  batchSize: number
+}): Promise<{ products: HttpTypes.StoreProduct[]; count: number }> => {
+  const catalogQuery = {
+    category_id: [categoryId],
+    limit: batchSize,
+    fields: TIRE_CATALOG_FIELDS,
+  }
+
+  const first = await listProducts({
+    countryCode,
+    pageParam: 1,
+    queryParams: catalogQuery,
+  })
+
+  const totalCount = first.response.count
+  const allProducts = [...first.response.products]
+
+  if (
+    first.response.products.length === 0 ||
+    allProducts.length >= totalCount
+  ) {
+    return { products: allProducts, count: totalCount }
+  }
+
+  const totalPages = Math.min(
+    Math.ceil(totalCount / batchSize),
+    CATEGORY_CATALOG_MAX_PAGES
+  )
+
+  if (totalPages <= 1) {
+    return { products: allProducts, count: totalCount }
+  }
+
+  const remainingPageNumbers = Array.from(
+    { length: totalPages - 1 },
+    (_, index) => index + 2
+  )
+
+  const remainingBatches = await Promise.all(
+    remainingPageNumbers.map((page) =>
+      listProducts({
+        countryCode,
+        pageParam: page,
+        queryParams: catalogQuery,
+      }).then((result) => result.response.products)
+    )
+  )
+
+  for (const batch of remainingBatches) {
+    allProducts.push(...batch)
+    if (allProducts.length >= totalCount) {
+      break
+    }
+  }
+
+  return {
+    products: allProducts.slice(0, totalCount),
+    count: totalCount,
+  }
+}
+
 /**
- * Fetches all products in a category by paging the Store API.
+ * Fetches all products in a category (parallel batches).
  * Used for tire filter facets and client-side filtered pagination.
+ *
+ * Not wrapped in unstable_cache: full tire catalogs exceed Next.js Data Cache
+ * 2MB entry limit (~35MB with variants). Per-page listProducts still uses
+ * force-cache via getCacheOptions("products").
  */
 export const listAllCategoryProducts = async ({
   countryCode,
@@ -155,35 +230,5 @@ export const listAllCategoryProducts = async ({
   categoryId: string
   batchSize?: number
 }): Promise<{ products: HttpTypes.StoreProduct[]; count: number }> => {
-  const allProducts: HttpTypes.StoreProduct[] = []
-  let page = 1
-  let totalCount = 0
-
-  while (page <= CATEGORY_CATALOG_MAX_PAGES) {
-    const { response } = await listProducts({
-      countryCode,
-      pageParam: page,
-      queryParams: {
-        category_id: [categoryId],
-        limit: batchSize,
-      },
-    })
-
-    if (page === 1) {
-      totalCount = response.count
-    }
-
-    allProducts.push(...response.products)
-
-    if (response.products.length === 0 || allProducts.length >= totalCount) {
-      break
-    }
-
-    page += 1
-  }
-
-  return {
-    products: allProducts,
-    count: totalCount,
-  }
+  return fetchAllCategoryProducts({ countryCode, categoryId, batchSize })
 }
