@@ -21,6 +21,9 @@ type Props = {
     height?: string
     inch?: string
     season?: string
+    fuel_efficiency?: string
+    wet_grip?: string
+    noise_class?: string
   }>
 }
 
@@ -75,8 +78,20 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
 export default async function CategoryPage(props: Props) {
   const searchParams = await props.searchParams
   const params = await props.params
-  const { sortBy, page, view, brand, model, width, height, inch, season } =
-    searchParams
+  const {
+    sortBy,
+    page,
+    view,
+    brand,
+    model,
+    width,
+    height,
+    inch,
+    season,
+    fuel_efficiency,
+    wet_grip,
+    noise_class,
+  } = searchParams
 
   const productCategory = await getCategoryByHandle(params.category)
 
@@ -98,6 +113,9 @@ export default async function CategoryPage(props: Props) {
         height,
         inch,
         season,
+        fuel_efficiency,
+        wet_grip,
+        noise_class,
       }}
     />
   )

@@ -1,6 +1,8 @@
 "use client"
 
 import {
+  getGradesForEuFilter,
+  TIRE_EU_GRADE_FILTER_KEYS,
   TIRE_FILTER_PARAM_KEYS,
   TireFilterParamKey,
   TireSpecOptions,
@@ -20,7 +22,15 @@ const FILTER_LABELS: Record<TireFilterParamKey, string> = {
   height: "Aspect ratio",
   inch: "Rim (inch)",
   season: "Season",
+  fuel_efficiency: "Fuel efficiency",
+  wet_grip: "Wet grip",
+  noise_class: "Noise class",
 }
+
+const isEuGradeFilterKey = (
+  key: TireFilterParamKey
+): key is (typeof TIRE_EU_GRADE_FILTER_KEYS)[number] =>
+  (TIRE_EU_GRADE_FILTER_KEYS as readonly string[]).includes(key)
 
 const selectClassName = clx(
   "w-full rounded-md border border-ui-border-base bg-ui-bg-base px-3 py-2",
@@ -74,9 +84,21 @@ export default function TireFiltersSidebar({
         return specOptions.inches
       case "season":
         return specOptions.seasons
+      case "fuel_efficiency":
+        return [...getGradesForEuFilter("fuel_efficiency")]
+      case "wet_grip":
+        return [...getGradesForEuFilter("wet_grip")]
+      case "noise_class":
+        return [...getGradesForEuFilter("noise_class")]
       default:
         return []
     }
+  }
+
+  const euGradeHint = (key: (typeof TIRE_EU_GRADE_FILTER_KEYS)[number]) => {
+    const grades = getGradesForEuFilter(key)
+    const worst = grades[grades.length - 1]
+    return `Up to ${worst} (A = best). Selecting ${worst} shows all.`
   }
 
   return (
@@ -128,14 +150,19 @@ export default function TireFiltersSidebar({
                   </option>
                 ))}
               </select>
+              {isEuGradeFilterKey(key) && (
+                <p className="mt-1 text-[10px] leading-snug text-ui-fg-muted">
+                  {euGradeHint(key)}
+                </p>
+              )}
             </div>
           )
         })}
       </div>
 
       <Text className="mt-4 text-small-regular text-ui-fg-subtle">
-        Product cards show the variant that matches size filters (width, height,
-        rim, season).
+        Cards show the variant matching size and EU label filters. Size: width,
+        height, rim, season.
       </Text>
     </aside>
   )

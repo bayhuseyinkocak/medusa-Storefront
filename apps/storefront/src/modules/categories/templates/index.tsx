@@ -24,6 +24,9 @@ type TireFilterSearchParams = {
   height?: string
   inch?: string
   season?: string
+  fuel_efficiency?: string
+  wet_grip?: string
+  noise_class?: string
 }
 
 export default async function CategoryTemplate({
@@ -59,6 +62,9 @@ export default async function CategoryTemplate({
     heights: [] as string[],
     inches: [] as string[],
     seasons: [] as string[],
+    fuelEfficiencies: [] as string[],
+    wetGrips: [] as string[],
+    noiseClasses: [] as string[],
   }
 
   let tireCatalogProducts: HttpTypes.StoreProduct[] | undefined

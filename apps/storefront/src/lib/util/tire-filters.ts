@@ -9,6 +9,9 @@ export type TireFilters = {
   height?: string
   inch?: string
   season?: string
+  fuel_efficiency?: string
+  wet_grip?: string
+  noise_class?: string
 }
 
 export type TireSpecOptions = {
@@ -18,7 +21,20 @@ export type TireSpecOptions = {
   heights: string[]
   inches: string[]
   seasons: string[]
+  fuelEfficiencies: string[]
+  wetGrips: string[]
+  noiseClasses: string[]
 }
+
+/** EU label grades (A = best). Worst grade selected = no filter for that dimension. */
+export const TIRE_FUEL_EFFICIENCY_GRADES = ["A", "B", "C", "D", "E"] as const
+export const TIRE_WET_GRIP_GRADES = ["A", "B", "C", "D", "E"] as const
+export const TIRE_NOISE_CLASS_GRADES = ["A", "B", "C"] as const
+
+export type EuGradeFilterKey =
+  | "fuel_efficiency"
+  | "wet_grip"
+  | "noise_class"
 
 /** URL / filter keys stored on parent product metadata (not variant). */
 export const TIRE_PRODUCT_FILTER_KEYS = ["brand", "model"] as const
@@ -29,6 +45,15 @@ export const TIRE_VARIANT_FILTER_KEYS = [
   "height",
   "inch",
   "season",
+  "fuel_efficiency",
+  "wet_grip",
+  "noise_class",
+] as const
+
+export const TIRE_EU_GRADE_FILTER_KEYS = [
+  "fuel_efficiency",
+  "wet_grip",
+  "noise_class",
 ] as const
 
 export const TIRE_FILTER_PARAM_KEYS = [
@@ -128,6 +153,65 @@ const sortNumericStrings = (values: string[]): string[] =>
 const sortAlphabetically = (values: string[]): string[] =>
   [...values].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }))
 
+const normalizeGradeLetter = (value: string): string =>
+  value.trim().charAt(0).toUpperCase()
+
+export const getGradesForEuFilter = (
+  key: EuGradeFilterKey
+): readonly string[] => {
+  switch (key) {
+    case "fuel_efficiency":
+      return TIRE_FUEL_EFFICIENCY_GRADES
+    case "wet_grip":
+      return TIRE_WET_GRIP_GRADES
+    case "noise_class":
+      return TIRE_NOISE_CLASS_GRADES
+  }
+}
+
+/** Selecting the worst grade (E or noise C) means no filter for that field. */
+export const isEuGradeFilterActive = (
+  selected: string | undefined,
+  grades: readonly string[]
+): boolean => {
+  if (!selected?.trim()) {
+    return false
+  }
+  const letter = normalizeGradeLetter(selected)
+  const idx = grades.indexOf(letter)
+  if (idx === -1) {
+    return false
+  }
+  return idx < grades.length - 1
+}
+
+/**
+ * Variant grade must be at least as good as the selected threshold (A best).
+ * e.g. filter C → accepts A, B, C.
+ */
+export const gradeMatchesCumulativeFilter = (
+  variantGrade: string,
+  selectedGrade: string,
+  grades: readonly string[]
+): boolean => {
+  const selectedLetter = normalizeGradeLetter(selectedGrade)
+  const selectedIdx = grades.indexOf(selectedLetter)
+  if (selectedIdx === -1) {
+    return true
+  }
+  if (selectedIdx === grades.length - 1) {
+    return true
+  }
+
+  const variantLetter = normalizeGradeLetter(variantGrade)
+  const variantIdx = grades.indexOf(variantLetter)
+  if (variantIdx === -1) {
+    return false
+  }
+
+  return variantIdx <= selectedIdx
+}
+
 /** Parent product metadata only (brand, model). */
 export const getProductMetadataAttrValue = (
   product: HttpTypes.StoreProduct,
@@ -149,6 +233,9 @@ export const collectTireSpecOptions = (
   const heights = new Set<string>()
   const inches = new Set<string>()
   const seasons = new Set<string>()
+  const fuelEfficiencies = new Set<string>()
+  const wetGrips = new Set<string>()
+  const noiseClasses = new Set<string>()
 
   products.forEach((product) => {
     const brand = getProductMetadataAttrValue(product, "brand")
@@ -164,7 +251,22 @@ export const collectTireSpecOptions = (
     getAttrValues(product, "height").forEach((v) => heights.add(v))
     getAttrValues(product, "inch").forEach((v) => inches.add(v))
     getAttrValues(product, "season").forEach((v) => seasons.add(v))
+    getAttrValues(product, "fuel_efficiency").forEach((v) =>
+      fuelEfficiencies.add(normalizeGradeLetter(v))
+    )
+    getAttrValues(product, "wet_grip").forEach((v) =>
+      wetGrips.add(normalizeGradeLetter(v))
+    )
+    getAttrValues(product, "noise_class").forEach((v) =>
+      noiseClasses.add(normalizeGradeLetter(v))
+    )
   })
+
+  const sortGrades = (
+    values: Set<string>,
+    order: readonly string[]
+  ): string[] =>
+    order.filter((grade) => values.has(grade))
 
   return {
     brands: sortAlphabetically(Array.from(brands)),
@@ -173,12 +275,31 @@ export const collectTireSpecOptions = (
     heights: sortNumericStrings(Array.from(heights)),
     inches: sortNumericStrings(Array.from(inches)),
     seasons: Array.from(seasons).sort(),
+    fuelEfficiencies: sortGrades(fuelEfficiencies, TIRE_FUEL_EFFICIENCY_GRADES),
+    wetGrips: sortGrades(wetGrips, TIRE_WET_GRIP_GRADES),
+    noiseClasses: sortGrades(noiseClasses, TIRE_NOISE_CLASS_GRADES),
   }
+}
+
+const hasActiveEuGradeFilter = (
+  filters: TireFilters | undefined,
+  key: EuGradeFilterKey
+): boolean => {
+  if (!filters) {
+    return false
+  }
+  return isEuGradeFilterActive(filters[key], getGradesForEuFilter(key))
 }
 
 export const hasActiveVariantTireFilters = (filters?: TireFilters): boolean =>
   Boolean(
-    filters?.width || filters?.height || filters?.inch || filters?.season
+    filters?.width ||
+      filters?.height ||
+      filters?.inch ||
+      filters?.season ||
+      hasActiveEuGradeFilter(filters, "fuel_efficiency") ||
+      hasActiveEuGradeFilter(filters, "wet_grip") ||
+      hasActiveEuGradeFilter(filters, "noise_class")
   )
 
 export const hasActiveTireFilters = (filters?: TireFilters): boolean =>
@@ -255,6 +376,44 @@ export const variantMatchesTireFilters = (
   if (filters.season) {
     const value = getVariantAttrValue(variant, "season")
     if (!value || !seasonMatchesFilter(value, filters.season)) {
+      return false
+    }
+  }
+  if (
+    hasActiveEuGradeFilter(filters, "fuel_efficiency") &&
+    filters.fuel_efficiency
+  ) {
+    const value = getVariantAttrValue(variant, "fuel_efficiency")
+    if (
+      !value ||
+      !gradeMatchesCumulativeFilter(
+        value,
+        filters.fuel_efficiency,
+        TIRE_FUEL_EFFICIENCY_GRADES
+      )
+    ) {
+      return false
+    }
+  }
+  if (hasActiveEuGradeFilter(filters, "wet_grip") && filters.wet_grip) {
+    const value = getVariantAttrValue(variant, "wet_grip")
+    if (
+      !value ||
+      !gradeMatchesCumulativeFilter(value, filters.wet_grip, TIRE_WET_GRIP_GRADES)
+    ) {
+      return false
+    }
+  }
+  if (hasActiveEuGradeFilter(filters, "noise_class") && filters.noise_class) {
+    const value = getVariantAttrValue(variant, "noise_class")
+    if (
+      !value ||
+      !gradeMatchesCumulativeFilter(
+        value,
+        filters.noise_class,
+        TIRE_NOISE_CLASS_GRADES
+      )
+    ) {
       return false
     }
   }
@@ -369,5 +528,8 @@ export const parseTireFiltersFromSearchParams = (
     height: read("height"),
     inch: read("inch"),
     season: read("season"),
+    fuel_efficiency: read("fuel_efficiency"),
+    wet_grip: read("wet_grip"),
+    noise_class: read("noise_class"),
   }
 }
