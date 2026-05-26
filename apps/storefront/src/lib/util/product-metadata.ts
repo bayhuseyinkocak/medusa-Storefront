@@ -57,7 +57,8 @@ export const getProductMetadataValue = (
 }
 
 /**
- * Returns all product options as an array, preserving their id, title, and possible values.
+ * Returns all product options as an array (Medusa option model).
+ * Tire catalog uses variant metadata instead; prefer getVariantMetadataValue / formatTireSize.
  */
 export const getProductVariantOptions = (
   product: HttpTypes.StoreProduct
@@ -123,9 +124,12 @@ export const getPriceCategory = (
   return getProductMetadataValue(product, "price_category")
 }
 
-export const isEvTire = (product: HttpTypes.StoreProduct): boolean => {
-  const variant = getCheapestVariant(product)
-  const extra = getVariantMetadataValue(variant, "extra")
+export const isEvTire = (
+  product: HttpTypes.StoreProduct,
+  variant?: HttpTypes.StoreProductVariant
+): boolean => {
+  const targetVariant = variant ?? getCheapestVariant(product)
+  const extra = getVariantMetadataValue(targetVariant, "extra")
   return extra.toLowerCase().includes("ev")
 }
 
@@ -137,13 +141,14 @@ export type EuTireLabelData = {
 }
 
 export const getEuTireLabel = (
-  product: HttpTypes.StoreProduct
+  product: HttpTypes.StoreProduct,
+  variant?: HttpTypes.StoreProductVariant
 ): EuTireLabelData | null => {
-  const variant = getCheapestVariant(product)
-  const fuel = getVariantMetadataValue(variant, "fuel_efficiency")
-  const wetGrip = getVariantMetadataValue(variant, "wet_grip")
-  const noiseLevel = getVariantMetadataValue(variant, "noise_level")
-  const noiseClass = getVariantMetadataValue(variant, "noise_class")
+  const targetVariant = variant ?? getCheapestVariant(product)
+  const fuel = getVariantMetadataValue(targetVariant, "fuel_efficiency")
+  const wetGrip = getVariantMetadataValue(targetVariant, "wet_grip")
+  const noiseLevel = getVariantMetadataValue(targetVariant, "noise_level")
+  const noiseClass = getVariantMetadataValue(targetVariant, "noise_class")
 
   if (!fuel && !wetGrip && !noiseLevel && !noiseClass) {
     return null

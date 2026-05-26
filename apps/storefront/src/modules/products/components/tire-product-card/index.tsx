@@ -2,10 +2,10 @@ import { getProductPrice } from "@lib/util/get-product-price"
 import {
   formatSeasonLabel,
   formatTireSize,
+  getCheapestVariant,
   getEuTireLabel,
   getPriceCategory,
   getProductMetadataValue,
-  getProductVariantOptions,
   isEvTire,
 } from "@lib/util/product-metadata"
 import { HttpTypes } from "@medusajs/types"
@@ -27,23 +27,19 @@ export default function TireProductCard({
   product,
   view = "grid",
 }: TireProductCardProps) {
+  const displayVariant = getCheapestVariant(product)
   const { cheapestPrice } = getProductPrice({ product })
   const brand = getProductMetadataValue(product, "brand")
   const model = getProductMetadataValue(product, "model")
-  const season = getProductMetadataValue(product, "season")
-  const size = formatTireSize(product)
+  const season = getProductMetadataValue(product, "season", displayVariant)
+  const size = formatTireSize(product, displayVariant)
   const priceCategory = getPriceCategory(product)
-  const euLabel = getEuTireLabel(product)
-  const showEvBadge = isEvTire(product)
+  const euLabel = getEuTireLabel(product, displayVariant)
+  const showEvBadge = isEvTire(product, displayVariant)
   const isList = view === "list"
-  const productHref = `/products/${product.handle}`
-  const options = getProductVariantOptions(product)
-  const option1 = options[0]?.values[0]
-  console.log('options', options)
-  console.log('option1', option1)
-  console.log('options_x', product.options)
-console.log('variant options_x', product.variants?.[0]?.options)
-console.log('product', product)
+  const productHref = displayVariant?.id
+    ? `/products/${product.handle}?v_id=${displayVariant.id}`
+    : `/products/${product.handle}`
 
   const imageBlock = (
     <div className="relative w-full">
@@ -80,7 +76,7 @@ console.log('product', product)
           {brand && <span className="">{brand}</span>} {model || product.title}
         </Text>
         {size && (
-          <Text className="text-sm font-semibold text-slate-700">{option1 || size}</Text>
+          <Text className="text-sm font-semibold text-slate-700">{size}</Text>
         )}
       </LocalizedClientLink>
 
