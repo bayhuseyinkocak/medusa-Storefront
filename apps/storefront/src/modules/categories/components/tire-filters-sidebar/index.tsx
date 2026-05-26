@@ -134,8 +134,8 @@ export default function TireFiltersSidebar({
       </div>
 
       <Text className="mt-4 text-small-regular text-ui-fg-subtle">
-        Product cards show the variant that matches your selection. Listing is
-        filtered on the current page.
+        Product cards show the variant that matches size filters (width, height,
+        rim, season).
       </Text>
     </aside>
   )

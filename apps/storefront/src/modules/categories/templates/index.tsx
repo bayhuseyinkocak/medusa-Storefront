@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation"
 import { Suspense } from "react"
 
-import { listProducts } from "@lib/data/products"
+import { listAllCategoryProducts } from "@lib/data/products"
 import {
   collectTireSpecOptions,
   parseTireFiltersFromSearchParams,
@@ -16,8 +16,6 @@ import { ViewMode } from "@modules/store/components/view-mode-toggle"
 import PaginatedProducts from "@modules/store/templates/paginated-products"
 import LocalizedClientLink from "@modules/common/components/localized-client-link"
 import { HttpTypes } from "@medusajs/types"
-
-const TIRE_SPEC_SAMPLE_LIMIT = 100
 
 type TireFilterSearchParams = {
   brand?: string
@@ -63,15 +61,15 @@ export default async function CategoryTemplate({
     seasons: [] as string[],
   }
 
+  let tireCatalogProducts: HttpTypes.StoreProduct[] | undefined
+
   if (isTiresCategory) {
-    const { response } = await listProducts({
+    const { products } = await listAllCategoryProducts({
       countryCode,
-      queryParams: {
-        category_id: [category.id],
-        limit: TIRE_SPEC_SAMPLE_LIMIT,
-      },
+      categoryId: category.id,
     })
-    tireSpecOptions = collectTireSpecOptions(response.products)
+    tireCatalogProducts = products
+    tireSpecOptions = collectTireSpecOptions(products)
   }
 
   const parents = [] as HttpTypes.StoreProductCategory[]
@@ -145,6 +143,7 @@ export default async function CategoryTemplate({
             view={viewMode}
             showToolbar
             tireFilters={isTiresCategory ? tireFilters : undefined}
+            tireCatalogProducts={tireCatalogProducts}
           />
         </Suspense>
       </CategoryListingLayout>

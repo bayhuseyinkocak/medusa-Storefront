@@ -138,3 +138,52 @@ export const listProductsPaginated = async ({
     nextPage,
   }
 }
+
+const CATEGORY_CATALOG_BATCH_SIZE = 100
+const CATEGORY_CATALOG_MAX_PAGES = 50
+
+/**
+ * Fetches all products in a category by paging the Store API.
+ * Used for tire filter facets and client-side filtered pagination.
+ */
+export const listAllCategoryProducts = async ({
+  countryCode,
+  categoryId,
+  batchSize = CATEGORY_CATALOG_BATCH_SIZE,
+}: {
+  countryCode: string
+  categoryId: string
+  batchSize?: number
+}): Promise<{ products: HttpTypes.StoreProduct[]; count: number }> => {
+  const allProducts: HttpTypes.StoreProduct[] = []
+  let page = 1
+  let totalCount = 0
+
+  while (page <= CATEGORY_CATALOG_MAX_PAGES) {
+    const { response } = await listProducts({
+      countryCode,
+      pageParam: page,
+      queryParams: {
+        category_id: [categoryId],
+        limit: batchSize,
+      },
+    })
+
+    if (page === 1) {
+      totalCount = response.count
+    }
+
+    allProducts.push(...response.products)
+
+    if (response.products.length === 0 || allProducts.length >= totalCount) {
+      break
+    }
+
+    page += 1
+  }
+
+  return {
+    products: allProducts,
+    count: totalCount,
+  }
+}

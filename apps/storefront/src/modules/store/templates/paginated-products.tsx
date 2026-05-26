@@ -1,10 +1,12 @@
 import { listProductsPaginated } from "@lib/data/products"
+import { sortProducts } from "@lib/util/sort-products"
 import {
   hasActiveTireFilters,
   productMatchesTireFilters,
   TireFilters,
 } from "@lib/util/tire-filters"
 import { getRegion } from "@lib/data/regions"
+import { HttpTypes } from "@medusajs/types"
 import ProductCard from "@modules/products/components/product-card"
 import { Pagination } from "@modules/store/components/pagination"
 import ProductListingToolbar from "@modules/store/components/product-listing-toolbar"
@@ -33,6 +35,7 @@ export default async function PaginatedProducts({
   view = "grid",
   showToolbar = true,
   tireFilters,
+  tireCatalogProducts,
 }: {
   sortBy?: SortOptions
   page: number
@@ -44,6 +47,7 @@ export default async function PaginatedProducts({
   view?: ViewMode
   showToolbar?: boolean
   tireFilters?: TireFilters
+  tireCatalogProducts?: HttpTypes.StoreProduct[]
 }) {
   const sort = sortBy || "created_at"
   const queryParams: PaginatedProductsParams = {
@@ -68,66 +72,86 @@ export default async function PaginatedProducts({
     return null
   }
 
-  const {
-    response: { products, count },
-  } = await listProductsPaginated({
-    page,
-    limit: PRODUCT_LIMIT,
-    queryParams,
-    sortBy: sort,
-    countryCode,
-  })
-
-  const totalPages = Math.ceil(count / PRODUCT_LIMIT)
   const isList = view === "list"
   const isTiresCategory = categoryHandle === "tires"
+  const useTireCatalog =
+    isTiresCategory &&
+    tireCatalogProducts != null &&
+    tireCatalogProducts.length > 0
 
-  const visibleProducts = hasActiveTireFilters(tireFilters)
-    ? products.filter((product) => productMatchesTireFilters(product, tireFilters))
-    : products
+  let visibleProducts: HttpTypes.StoreProduct[] = []
+  let resultCount = 0
+  let totalPages = 0
+
+  if (useTireCatalog) {
+    const filtered = hasActiveTireFilters(tireFilters)
+      ? tireCatalogProducts.filter((product) =>
+          productMatchesTireFilters(product, tireFilters)
+        )
+      : tireCatalogProducts
+
+    const sorted = sortProducts(filtered, sort)
+    resultCount = sorted.length
+    totalPages = Math.max(1, Math.ceil(resultCount / PRODUCT_LIMIT))
+    const safePage = Math.min(Math.max(page, 1), totalPages)
+    const offset = (safePage - 1) * PRODUCT_LIMIT
+    visibleProducts = sorted.slice(offset, offset + PRODUCT_LIMIT)
+  } else {
+    const {
+      response: { products, count },
+    } = await listProductsPaginated({
+      page,
+      limit: PRODUCT_LIMIT,
+      queryParams,
+      sortBy: sort,
+      countryCode,
+    })
+
+    visibleProducts = products
+    resultCount = count
+    totalPages = Math.ceil(count / PRODUCT_LIMIT)
+  }
 
   return (
     <>
       {showToolbar && (
         <ProductListingToolbar
-          count={
-            hasActiveTireFilters(tireFilters)
-              ? visibleProducts.length
-              : count
-          }
+          count={resultCount}
           sortBy={sort}
           view={view}
         />
       )}
-      {hasActiveTireFilters(tireFilters) && visibleProducts.length === 0 ? (
+      {visibleProducts.length === 0 ? (
         <p className="py-12 text-center text-small-regular text-ui-fg-subtle">
-          No products on this page match the selected tire size filters.
+          {hasActiveTireFilters(tireFilters)
+            ? "No products match the selected filters."
+            : "No products found."}
         </p>
       ) : (
-      <ul
-        className={clx(
-          "w-full",
-          isList
-            ? "flex flex-col gap-4"
-            : isTiresCategory
-              ? "grid grid-cols-1 gap-x-4 gap-y-6 xsmall:grid-cols-2 medium:grid-cols-3"
-              : "grid grid-cols-2 gap-x-6 gap-y-8 small:grid-cols-3 medium:grid-cols-4"
-        )}
-        data-testid="products-list"
-      >
-        {visibleProducts.map((p) => (
-          <li key={p.id} className={clx(isList && "w-full")}>
-            <ProductCard
-              product={p}
-              region={region}
-              categoryHandle={categoryHandle}
-              view={view}
-              isFeatured={!isList}
-              tireFilters={tireFilters}
-            />
-          </li>
-        ))}
-      </ul>
+        <ul
+          className={clx(
+            "w-full",
+            isList
+              ? "flex flex-col gap-4"
+              : isTiresCategory
+                ? "grid grid-cols-1 gap-x-4 gap-y-6 xsmall:grid-cols-2 medium:grid-cols-3"
+                : "grid grid-cols-2 gap-x-6 gap-y-8 small:grid-cols-3 medium:grid-cols-4"
+          )}
+          data-testid="products-list"
+        >
+          {visibleProducts.map((p) => (
+            <li key={p.id} className={clx(isList && "w-full")}>
+              <ProductCard
+                product={p}
+                region={region}
+                categoryHandle={categoryHandle}
+                view={view}
+                isFeatured={!isList}
+                tireFilters={tireFilters}
+              />
+            </li>
+          ))}
+        </ul>
       )}
       {totalPages > 1 && (
         <Pagination
