@@ -24,9 +24,16 @@ type TireFilterSearchParams = {
   height?: string
   inch?: string
   season?: string
+  vehicle?: string
+  speed_rating?: string
+  load_index?: string
   fuel_efficiency?: string
   wet_grip?: string
   noise_class?: string
+  dot?: string
+  m_s?: string
+  ice_grip?: string
+  snow_condition?: string
 }
 
 export default async function CategoryTemplate({
@@ -62,6 +69,9 @@ export default async function CategoryTemplate({
     heights: [] as string[],
     inches: [] as string[],
     seasons: [] as string[],
+    vehicles: [] as string[],
+    speedRatings: [] as string[],
+    loadIndices: [] as string[],
     fuelEfficiencies: [] as string[],
     wetGrips: [] as string[],
     noiseClasses: [] as string[],

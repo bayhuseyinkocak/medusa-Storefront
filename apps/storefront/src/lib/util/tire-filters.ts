@@ -9,9 +9,17 @@ export type TireFilters = {
   height?: string
   inch?: string
   season?: string
+  vehicle?: string
+  speed_rating?: string
+  load_index?: string
   fuel_efficiency?: string
   wet_grip?: string
   noise_class?: string
+  /** When true, only variants/products with metadata flag set to true. */
+  dot?: boolean
+  m_s?: boolean
+  ice_grip?: boolean
+  snow_condition?: boolean
 }
 
 export type TireSpecOptions = {
@@ -21,6 +29,9 @@ export type TireSpecOptions = {
   heights: string[]
   inches: string[]
   seasons: string[]
+  vehicles: string[]
+  speedRatings: string[]
+  loadIndices: string[]
   fuelEfficiencies: string[]
   wetGrips: string[]
   noiseClasses: string[]
@@ -45,6 +56,9 @@ export const TIRE_VARIANT_FILTER_KEYS = [
   "height",
   "inch",
   "season",
+  "vehicle",
+  "speed_rating",
+  "load_index",
   "fuel_efficiency",
   "wet_grip",
   "noise_class",
@@ -56,11 +70,28 @@ export const TIRE_EU_GRADE_FILTER_KEYS = [
   "noise_class",
 ] as const
 
-export const TIRE_FILTER_PARAM_KEYS = [
+/** Checkbox filters: only applied when enabled (URL param present). */
+export const TIRE_BOOLEAN_FILTER_KEYS = [
+  "dot",
+  "m_s",
+  "ice_grip",
+  "snow_condition",
+] as const
+
+export type TireBooleanFilterKey = (typeof TIRE_BOOLEAN_FILTER_KEYS)[number]
+
+export const TIRE_SELECT_FILTER_PARAM_KEYS = [
   ...TIRE_PRODUCT_FILTER_KEYS,
   ...TIRE_VARIANT_FILTER_KEYS,
 ] as const
 
+export const TIRE_FILTER_PARAM_KEYS = [
+  ...TIRE_SELECT_FILTER_PARAM_KEYS,
+  ...TIRE_BOOLEAN_FILTER_KEYS,
+] as const
+
+export type TireSelectFilterParamKey =
+  (typeof TIRE_SELECT_FILTER_PARAM_KEYS)[number]
 export type TireFilterParamKey = (typeof TIRE_FILTER_PARAM_KEYS)[number]
 export type TireProductFilterKey = (typeof TIRE_PRODUCT_FILTER_KEYS)[number]
 export type TireVariantFilterKey = (typeof TIRE_VARIANT_FILTER_KEYS)[number]
@@ -104,6 +135,20 @@ export const matchesOptionTitle = (key: string, titleLower: string): boolean => 
   }
   if (k === "season") {
     return titleLower === "season"
+  }
+  if (k === "speed_rating") {
+    return (
+      titleLower === "speed_rating" ||
+      titleLower === "speed rating" ||
+      titleLower === "speed"
+    )
+  }
+  if (k === "load_index") {
+    return (
+      titleLower === "load_index" ||
+      titleLower === "load index" ||
+      titleLower === "load"
+    )
   }
   return titleLower === k
 }
@@ -236,6 +281,9 @@ export const collectTireSpecOptions = (
   const fuelEfficiencies = new Set<string>()
   const wetGrips = new Set<string>()
   const noiseClasses = new Set<string>()
+  const vehicles = new Set<string>()
+  const speedRatings = new Set<string>()
+  const loadIndices = new Set<string>()
 
   products.forEach((product) => {
     const brand = getProductMetadataAttrValue(product, "brand")
@@ -251,6 +299,9 @@ export const collectTireSpecOptions = (
     getAttrValues(product, "height").forEach((v) => heights.add(v))
     getAttrValues(product, "inch").forEach((v) => inches.add(v))
     getAttrValues(product, "season").forEach((v) => seasons.add(v))
+    getAttrValues(product, "vehicle").forEach((v) => vehicles.add(v))
+    getAttrValues(product, "speed_rating").forEach((v) => speedRatings.add(v))
+    getAttrValues(product, "load_index").forEach((v) => loadIndices.add(v))
     getAttrValues(product, "fuel_efficiency").forEach((v) =>
       fuelEfficiencies.add(normalizeGradeLetter(v))
     )
@@ -275,6 +326,9 @@ export const collectTireSpecOptions = (
     heights: sortNumericStrings(Array.from(heights)),
     inches: sortNumericStrings(Array.from(inches)),
     seasons: Array.from(seasons).sort(),
+    vehicles: sortAlphabetically(Array.from(vehicles)),
+    speedRatings: sortAlphabetically(Array.from(speedRatings)),
+    loadIndices: sortNumericStrings(Array.from(loadIndices)),
     fuelEfficiencies: sortGrades(fuelEfficiencies, TIRE_FUEL_EFFICIENCY_GRADES),
     wetGrips: sortGrades(wetGrips, TIRE_WET_GRIP_GRADES),
     noiseClasses: sortGrades(noiseClasses, TIRE_NOISE_CLASS_GRADES),
@@ -291,15 +345,27 @@ const hasActiveEuGradeFilter = (
   return isEuGradeFilterActive(filters[key], getGradesForEuFilter(key))
 }
 
+const hasActiveBooleanFilter = (
+  filters: TireFilters | undefined,
+  key: TireBooleanFilterKey
+): boolean => filters?.[key] === true
+
 export const hasActiveVariantTireFilters = (filters?: TireFilters): boolean =>
   Boolean(
     filters?.width ||
       filters?.height ||
       filters?.inch ||
       filters?.season ||
+      filters?.vehicle ||
+      filters?.speed_rating ||
+      filters?.load_index ||
       hasActiveEuGradeFilter(filters, "fuel_efficiency") ||
       hasActiveEuGradeFilter(filters, "wet_grip") ||
-      hasActiveEuGradeFilter(filters, "noise_class")
+      hasActiveEuGradeFilter(filters, "noise_class") ||
+      hasActiveBooleanFilter(filters, "dot") ||
+      hasActiveBooleanFilter(filters, "m_s") ||
+      hasActiveBooleanFilter(filters, "ice_grip") ||
+      hasActiveBooleanFilter(filters, "snow_condition")
   )
 
 export const hasActiveTireFilters = (filters?: TireFilters): boolean =>
@@ -326,6 +392,22 @@ const seasonMatchesFilter = (
   }
   return s === sel
 }
+
+export const isMetadataTruthy = (value: unknown): boolean => {
+  if (value === true || value === 1) {
+    return true
+  }
+  if (typeof value === "string") {
+    const normalized = value.toLowerCase().trim()
+    return normalized === "true" || normalized === "1" || normalized === "yes"
+  }
+  return false
+}
+
+const getVariantMetadataTruthy = (
+  variant: HttpTypes.StoreProductVariant,
+  key: TireBooleanFilterKey
+): boolean => isMetadataTruthy(variant.metadata?.[key])
 
 const getVariantAttrValue = (
   variant: HttpTypes.StoreProductVariant,
@@ -379,6 +461,24 @@ export const variantMatchesTireFilters = (
       return false
     }
   }
+  if (filters.vehicle) {
+    const value = getVariantAttrValue(variant, "vehicle")
+    if (value !== normalizeFilterValue(filters.vehicle)) {
+      return false
+    }
+  }
+  if (filters.speed_rating) {
+    const value = getVariantAttrValue(variant, "speed_rating")
+    if (value !== normalizeFilterValue(filters.speed_rating)) {
+      return false
+    }
+  }
+  if (filters.load_index) {
+    const value = getVariantAttrValue(variant, "load_index")
+    if (value !== normalizeFilterValue(filters.load_index)) {
+      return false
+    }
+  }
   if (
     hasActiveEuGradeFilter(filters, "fuel_efficiency") &&
     filters.fuel_efficiency
@@ -416,6 +516,24 @@ export const variantMatchesTireFilters = (
     ) {
       return false
     }
+  }
+  if (hasActiveBooleanFilter(filters, "dot") && !getVariantMetadataTruthy(variant, "dot")) {
+    return false
+  }
+  if (hasActiveBooleanFilter(filters, "m_s") && !getVariantMetadataTruthy(variant, "m_s")) {
+    return false
+  }
+  if (
+    hasActiveBooleanFilter(filters, "ice_grip") &&
+    !getVariantMetadataTruthy(variant, "ice_grip")
+  ) {
+    return false
+  }
+  if (
+    hasActiveBooleanFilter(filters, "snow_condition") &&
+    !getVariantMetadataTruthy(variant, "snow_condition")
+  ) {
+    return false
   }
   return true
 }
@@ -512,13 +630,25 @@ export const resolveDisplayVariant = (
 export const parseTireFiltersFromSearchParams = (
   searchParams: Record<string, string | string[] | undefined>
 ): TireFilters => {
-  const read = (key: TireFilterParamKey): string | undefined => {
+  const read = (key: TireSelectFilterParamKey): string | undefined => {
     const raw = searchParams[key]
     const value = Array.isArray(raw) ? raw[0] : raw
     if (!value || value.trim() === "") {
       return undefined
     }
     return value.trim()
+  }
+
+  const readBoolean = (key: TireBooleanFilterKey): boolean | undefined => {
+    const raw = searchParams[key]
+    const value = Array.isArray(raw) ? raw[0] : raw
+    if (!value || value.trim() === "") {
+      return undefined
+    }
+    if (isMetadataTruthy(value)) {
+      return true
+    }
+    return undefined
   }
 
   return {
@@ -528,8 +658,15 @@ export const parseTireFiltersFromSearchParams = (
     height: read("height"),
     inch: read("inch"),
     season: read("season"),
+    vehicle: read("vehicle"),
+    speed_rating: read("speed_rating"),
+    load_index: read("load_index"),
     fuel_efficiency: read("fuel_efficiency"),
     wet_grip: read("wet_grip"),
     noise_class: read("noise_class"),
+    dot: readBoolean("dot"),
+    m_s: readBoolean("m_s"),
+    ice_grip: readBoolean("ice_grip"),
+    snow_condition: readBoolean("snow_condition"),
   }
 }

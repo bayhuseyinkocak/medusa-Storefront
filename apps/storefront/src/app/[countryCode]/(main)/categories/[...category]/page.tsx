@@ -21,9 +21,16 @@ type Props = {
     height?: string
     inch?: string
     season?: string
+    vehicle?: string
+    speed_rating?: string
+    load_index?: string
     fuel_efficiency?: string
     wet_grip?: string
     noise_class?: string
+    dot?: string
+    m_s?: string
+    ice_grip?: string
+    snow_condition?: string
   }>
 }
 
@@ -88,9 +95,16 @@ export default async function CategoryPage(props: Props) {
     height,
     inch,
     season,
+    vehicle,
+    speed_rating,
+    load_index,
     fuel_efficiency,
     wet_grip,
     noise_class,
+    dot,
+    m_s,
+    ice_grip,
+    snow_condition,
   } = searchParams
 
   const productCategory = await getCategoryByHandle(params.category)
@@ -113,9 +127,16 @@ export default async function CategoryPage(props: Props) {
         height,
         inch,
         season,
+        vehicle,
+        speed_rating,
+        load_index,
         fuel_efficiency,
         wet_grip,
         noise_class,
+        dot,
+        m_s,
+        ice_grip,
+        snow_condition,
       }}
     />
   )
