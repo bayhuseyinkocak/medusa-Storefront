@@ -14,6 +14,8 @@ type TireFiltersSidebarProps = {
 }
 
 const FILTER_LABELS: Record<TireFilterParamKey, string> = {
+  brand: "Brand",
+  model: "Model",
   width: "Width",
   height: "Aspect ratio",
   inch: "Rim (inch)",
@@ -60,6 +62,10 @@ export default function TireFiltersSidebar({
 
   const optionsForKey = (key: TireFilterParamKey): string[] => {
     switch (key) {
+      case "brand":
+        return specOptions.brands
+      case "model":
+        return specOptions.models
       case "width":
         return specOptions.widths
       case "height":
@@ -75,12 +81,12 @@ export default function TireFiltersSidebar({
 
   return (
     <aside
-      className="rounded-large border border-ui-border-base bg-ui-bg-subtle p-4 small:sticky small:top-20"
+      className="rounded-md border border-ui-border-base bg-ui-bg-subtle p-4 small:sticky small:top-20"
       data-testid="tire-filters-sidebar"
     >
       <div className="mb-4 flex items-center justify-between gap-2">
         <Text className="txt-compact-medium-plus text-ui-fg-base">
-          Tire size
+          Tire filters
         </Text>
         {hasActiveFilters && (
           <button

@@ -3,6 +3,8 @@ import { HttpTypes } from "@medusajs/types"
 import { getCheapestVariant } from "@lib/util/product-metadata"
 
 export type TireFilters = {
+  brand?: string
+  model?: string
   width?: string
   height?: string
   inch?: string
@@ -10,11 +12,33 @@ export type TireFilters = {
 }
 
 export type TireSpecOptions = {
+  brands: string[]
+  models: string[]
   widths: string[]
   heights: string[]
   inches: string[]
   seasons: string[]
 }
+
+/** URL / filter keys stored on parent product metadata (not variant). */
+export const TIRE_PRODUCT_FILTER_KEYS = ["brand", "model"] as const
+
+/** URL / filter keys stored on variant metadata or options. */
+export const TIRE_VARIANT_FILTER_KEYS = [
+  "width",
+  "height",
+  "inch",
+  "season",
+] as const
+
+export const TIRE_FILTER_PARAM_KEYS = [
+  ...TIRE_PRODUCT_FILTER_KEYS,
+  ...TIRE_VARIANT_FILTER_KEYS,
+] as const
+
+export type TireFilterParamKey = (typeof TIRE_FILTER_PARAM_KEYS)[number]
+export type TireProductFilterKey = (typeof TIRE_PRODUCT_FILTER_KEYS)[number]
+export type TireVariantFilterKey = (typeof TIRE_VARIANT_FILTER_KEYS)[number]
 
 type VariantOptionLike = {
   value?: string | null
@@ -101,15 +125,41 @@ export const getAttrValues = (
 const sortNumericStrings = (values: string[]): string[] =>
   [...values].sort((a, b) => parseFloat(a) - parseFloat(b))
 
+const sortAlphabetically = (values: string[]): string[] =>
+  [...values].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }))
+
+/** Parent product metadata only (brand, model). */
+export const getProductMetadataAttrValue = (
+  product: HttpTypes.StoreProduct,
+  key: TireProductFilterKey
+): string => {
+  const metaVal = product.metadata?.[key]
+  if (isScalar(metaVal)) {
+    return normalizeFilterValue(String(metaVal))
+  }
+  return ""
+}
+
 export const collectTireSpecOptions = (
   products: HttpTypes.StoreProduct[]
 ): TireSpecOptions => {
+  const brands = new Set<string>()
+  const models = new Set<string>()
   const widths = new Set<string>()
   const heights = new Set<string>()
   const inches = new Set<string>()
   const seasons = new Set<string>()
 
   products.forEach((product) => {
+    const brand = getProductMetadataAttrValue(product, "brand")
+    const model = getProductMetadataAttrValue(product, "model")
+    if (brand) {
+      brands.add(brand)
+    }
+    if (model) {
+      models.add(model)
+    }
+
     getAttrValues(product, "width").forEach((v) => widths.add(v))
     getAttrValues(product, "height").forEach((v) => heights.add(v))
     getAttrValues(product, "inch").forEach((v) => inches.add(v))
@@ -117,6 +167,8 @@ export const collectTireSpecOptions = (
   })
 
   return {
+    brands: sortAlphabetically(Array.from(brands)),
+    models: sortAlphabetically(Array.from(models)),
     widths: sortNumericStrings(Array.from(widths)),
     heights: sortNumericStrings(Array.from(heights)),
     inches: sortNumericStrings(Array.from(inches)),
@@ -124,9 +176,16 @@ export const collectTireSpecOptions = (
   }
 }
 
-export const hasActiveTireFilters = (filters?: TireFilters): boolean =>
+export const hasActiveVariantTireFilters = (filters?: TireFilters): boolean =>
   Boolean(
     filters?.width || filters?.height || filters?.inch || filters?.season
+  )
+
+export const hasActiveTireFilters = (filters?: TireFilters): boolean =>
+  Boolean(
+    filters?.brand ||
+      filters?.model ||
+      hasActiveVariantTireFilters(filters)
   )
 
 const seasonMatchesFilter = (
@@ -202,11 +261,38 @@ export const variantMatchesTireFilters = (
   return true
 }
 
+const productMatchesProductLevelFilters = (
+  product: HttpTypes.StoreProduct,
+  filters: TireFilters
+): boolean => {
+  if (filters.brand) {
+    const brand = getProductMetadataAttrValue(product, "brand")
+    if (brand !== normalizeFilterValue(filters.brand)) {
+      return false
+    }
+  }
+  if (filters.model) {
+    const model = getProductMetadataAttrValue(product, "model")
+    if (model !== normalizeFilterValue(filters.model)) {
+      return false
+    }
+  }
+  return true
+}
+
 export const productMatchesTireFilters = (
   product: HttpTypes.StoreProduct,
   filters?: TireFilters
 ): boolean => {
   if (!hasActiveTireFilters(filters) || !filters) {
+    return true
+  }
+
+  if (!productMatchesProductLevelFilters(product, filters)) {
+    return false
+  }
+
+  if (!hasActiveVariantTireFilters(filters)) {
     return true
   }
 
@@ -250,7 +336,7 @@ export const resolveDisplayVariant = (
   product: HttpTypes.StoreProduct,
   filters?: TireFilters
 ): HttpTypes.StoreProductVariant | undefined => {
-  if (!hasActiveTireFilters(filters) || !filters) {
+  if (!hasActiveVariantTireFilters(filters) || !filters) {
     return getCheapestVariant(product)
   }
 
@@ -263,15 +349,6 @@ export const resolveDisplayVariant = (
 
   return getCheapestVariant(product)
 }
-
-export const TIRE_FILTER_PARAM_KEYS = [
-  "width",
-  "height",
-  "inch",
-  "season",
-] as const
-
-export type TireFilterParamKey = (typeof TIRE_FILTER_PARAM_KEYS)[number]
 
 export const parseTireFiltersFromSearchParams = (
   searchParams: Record<string, string | string[] | undefined>
@@ -286,6 +363,8 @@ export const parseTireFiltersFromSearchParams = (
   }
 
   return {
+    brand: read("brand"),
+    model: read("model"),
     width: read("width"),
     height: read("height"),
     inch: read("inch"),

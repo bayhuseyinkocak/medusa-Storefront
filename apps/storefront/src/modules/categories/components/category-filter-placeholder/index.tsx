@@ -3,7 +3,7 @@ import { Text } from "@modules/common/components/ui"
 const CategoryFilterPlaceholder = () => {
   return (
     <aside
-      className="rounded-large border border-ui-border-base bg-ui-bg-subtle p-4 small:sticky small:top-20"
+      className="rounded-md border border-ui-border-base bg-ui-bg-subtle p-4 small:sticky small:top-20"
       data-testid="category-filters-placeholder"
     >
       <Text className="txt-compact-medium-plus text-ui-fg-base mb-2">

@@ -89,7 +89,15 @@ export default async function PaginatedProducts({
   return (
     <>
       {showToolbar && (
-        <ProductListingToolbar count={count} sortBy={sort} view={view} />
+        <ProductListingToolbar
+          count={
+            hasActiveTireFilters(tireFilters)
+              ? visibleProducts.length
+              : count
+          }
+          sortBy={sort}
+          view={view}
+        />
       )}
       {hasActiveTireFilters(tireFilters) && visibleProducts.length === 0 ? (
         <p className="py-12 text-center text-small-regular text-ui-fg-subtle">

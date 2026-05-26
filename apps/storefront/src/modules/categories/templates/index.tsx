@@ -20,6 +20,8 @@ import { HttpTypes } from "@medusajs/types"
 const TIRE_SPEC_SAMPLE_LIMIT = 100
 
 type TireFilterSearchParams = {
+  brand?: string
+  model?: string
   width?: string
   height?: string
   inch?: string
@@ -53,6 +55,8 @@ export default async function CategoryTemplate({
   )
 
   let tireSpecOptions = {
+    brands: [] as string[],
+    models: [] as string[],
     widths: [] as string[],
     heights: [] as string[],
     inches: [] as string[],
