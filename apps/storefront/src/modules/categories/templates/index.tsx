@@ -1,8 +1,14 @@
 import { notFound } from "next/navigation"
 import { Suspense } from "react"
 
+import { listProducts } from "@lib/data/products"
+import {
+  collectTireSpecOptions,
+  parseTireFiltersFromSearchParams,
+} from "@lib/util/tire-filters"
 import InteractiveLink from "@modules/common/components/interactive-link"
 import CategoryFilterPlaceholder from "@modules/categories/components/category-filter-placeholder"
+import TireFiltersSidebar from "@modules/categories/components/tire-filters-sidebar"
 import CategoryListingLayout from "@modules/categories/templates/category-listing-layout"
 import SkeletonProductGrid from "@modules/skeletons/templates/skeleton-product-grid"
 import { SortOptions } from "@modules/store/components/refinement-list/sort-products"
@@ -11,24 +17,58 @@ import PaginatedProducts from "@modules/store/templates/paginated-products"
 import LocalizedClientLink from "@modules/common/components/localized-client-link"
 import { HttpTypes } from "@medusajs/types"
 
-export default function CategoryTemplate({
+const TIRE_SPEC_SAMPLE_LIMIT = 100
+
+type TireFilterSearchParams = {
+  width?: string
+  height?: string
+  inch?: string
+  season?: string
+}
+
+export default async function CategoryTemplate({
   category,
   sortBy,
   page,
   view,
   countryCode,
+  tireFilterSearchParams,
 }: {
   category: HttpTypes.StoreProductCategory
   sortBy?: SortOptions
   page?: string
   view?: ViewMode
   countryCode: string
+  tireFilterSearchParams?: TireFilterSearchParams
 }) {
   const pageNumber = page ? parseInt(page) : 1
   const sort = sortBy || "created_at"
   const viewMode: ViewMode = view === "list" ? "list" : "grid"
+  const isTiresCategory = category.handle === "tires"
 
   if (!category || !countryCode) notFound()
+
+  const tireFilters = parseTireFiltersFromSearchParams(
+    tireFilterSearchParams ?? {}
+  )
+
+  let tireSpecOptions = {
+    widths: [] as string[],
+    heights: [] as string[],
+    inches: [] as string[],
+    seasons: [] as string[],
+  }
+
+  if (isTiresCategory) {
+    const { response } = await listProducts({
+      countryCode,
+      queryParams: {
+        category_id: [category.id],
+        limit: TIRE_SPEC_SAMPLE_LIMIT,
+      },
+    })
+    tireSpecOptions = collectTireSpecOptions(response.products)
+  }
 
   const parents = [] as HttpTypes.StoreProductCategory[]
 
@@ -41,9 +81,23 @@ export default function CategoryTemplate({
 
   getParents(category)
 
+  const sidebar = isTiresCategory ? (
+    <Suspense
+      fallback={
+        <aside className="rounded-large border border-ui-border-base bg-ui-bg-subtle p-4">
+          <p className="text-small-regular text-ui-fg-subtle">Loading filters…</p>
+        </aside>
+      }
+    >
+      <TireFiltersSidebar specOptions={tireSpecOptions} />
+    </Suspense>
+  ) : (
+    <CategoryFilterPlaceholder />
+  )
+
   return (
     <div className="content-container" data-testid="category-container">
-      <div className="flex flex-row mb-8 gap-4 text-2xl-semi pt-6">
+      <div className="flex flex-row mb-8 gap-4 text-2xl-semi pt-6" style={{ display: "none" }}>
         {parents.map((parent) => (
           <span key={parent.id} className="text-ui-fg-subtle">
             <LocalizedClientLink
@@ -59,7 +113,7 @@ export default function CategoryTemplate({
         <h1 data-testid="category-page-title">{category.name}</h1>
       </div>
       {category.description && (
-        <div className="mb-8 text-base-regular text-ui-fg-subtle max-w-3xl">
+        <div className="mb-8 text-base-regular text-ui-fg-subtle max-w-3xl" style={{ display: "none" }}>
           <p>{category.description}</p>
         </div>
       )}
@@ -76,9 +130,7 @@ export default function CategoryTemplate({
           </ul>
         </div>
       )}
-      <CategoryListingLayout
-        sidebar={<CategoryFilterPlaceholder />}
-      >
+      <CategoryListingLayout sidebar={sidebar}>
         <Suspense fallback={<SkeletonProductGrid numberOfProducts={8} />}>
           <PaginatedProducts
             sortBy={sort}
@@ -88,6 +140,7 @@ export default function CategoryTemplate({
             countryCode={countryCode}
             view={viewMode}
             showToolbar
+            tireFilters={isTiresCategory ? tireFilters : undefined}
           />
         </Suspense>
       </CategoryListingLayout>

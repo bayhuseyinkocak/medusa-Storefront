@@ -2,12 +2,12 @@ import { getProductPrice } from "@lib/util/get-product-price"
 import {
   formatSeasonLabel,
   formatTireSize,
-  getCheapestVariant,
   getEuTireLabel,
   getPriceCategory,
   getProductMetadataValue,
   isEvTire,
 } from "@lib/util/product-metadata"
+import { resolveDisplayVariant, TireFilters } from "@lib/util/tire-filters"
 import { HttpTypes } from "@medusajs/types"
 import LocalizedClientLink from "@modules/common/components/localized-client-link"
 import { Text, clx } from "@modules/common/components/ui"
@@ -21,14 +21,20 @@ import TireCardPrice from "./tire-card-price"
 type TireProductCardProps = {
   product: HttpTypes.StoreProduct
   view?: "grid" | "list"
+  tireFilters?: TireFilters
 }
 
 export default function TireProductCard({
   product,
   view = "grid",
+  tireFilters,
 }: TireProductCardProps) {
-  const displayVariant = getCheapestVariant(product)
-  const { cheapestPrice } = getProductPrice({ product })
+  const displayVariant = resolveDisplayVariant(product, tireFilters)
+  const { variantPrice, cheapestPrice } = getProductPrice({
+    product,
+    variantId: displayVariant?.id,
+  })
+  const displayPrice = variantPrice ?? cheapestPrice
   const brand = getProductMetadataValue(product, "brand")
   const model = getProductMetadataValue(product, "model")
   const season = getProductMetadataValue(product, "season", displayVariant)
@@ -92,9 +98,9 @@ export default function TireProductCard({
       {euLabel && <EuTireLabel label={euLabel} compact />}
 
       <div className="flex items-center justify-between gap-2 border-t border-ui-border-base pt-2.5">
-        {cheapestPrice ? (
+        {displayPrice ? (
           <TireCardPrice
-            price={cheapestPrice}
+            price={displayPrice}
             align="left"
             size="default"
           />

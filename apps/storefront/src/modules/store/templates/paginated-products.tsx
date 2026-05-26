@@ -1,4 +1,9 @@
 import { listProductsPaginated } from "@lib/data/products"
+import {
+  hasActiveTireFilters,
+  productMatchesTireFilters,
+  TireFilters,
+} from "@lib/util/tire-filters"
 import { getRegion } from "@lib/data/regions"
 import ProductCard from "@modules/products/components/product-card"
 import { Pagination } from "@modules/store/components/pagination"
@@ -27,6 +32,7 @@ export default async function PaginatedProducts({
   countryCode,
   view = "grid",
   showToolbar = true,
+  tireFilters,
 }: {
   sortBy?: SortOptions
   page: number
@@ -37,6 +43,7 @@ export default async function PaginatedProducts({
   countryCode: string
   view?: ViewMode
   showToolbar?: boolean
+  tireFilters?: TireFilters
 }) {
   const sort = sortBy || "created_at"
   const queryParams: PaginatedProductsParams = {
@@ -75,11 +82,20 @@ export default async function PaginatedProducts({
   const isList = view === "list"
   const isTiresCategory = categoryHandle === "tires"
 
+  const visibleProducts = hasActiveTireFilters(tireFilters)
+    ? products.filter((product) => productMatchesTireFilters(product, tireFilters))
+    : products
+
   return (
     <>
       {showToolbar && (
         <ProductListingToolbar count={count} sortBy={sort} view={view} />
       )}
+      {hasActiveTireFilters(tireFilters) && visibleProducts.length === 0 ? (
+        <p className="py-12 text-center text-small-regular text-ui-fg-subtle">
+          No products on this page match the selected tire size filters.
+        </p>
+      ) : (
       <ul
         className={clx(
           "w-full",
@@ -91,7 +107,7 @@ export default async function PaginatedProducts({
         )}
         data-testid="products-list"
       >
-        {products.map((p) => (
+        {visibleProducts.map((p) => (
           <li key={p.id} className={clx(isList && "w-full")}>
             <ProductCard
               product={p}
@@ -99,10 +115,12 @@ export default async function PaginatedProducts({
               categoryHandle={categoryHandle}
               view={view}
               isFeatured={!isList}
+              tireFilters={tireFilters}
             />
           </li>
         ))}
       </ul>
+      )}
       {totalPages > 1 && (
         <Pagination
           data-testid="product-pagination"

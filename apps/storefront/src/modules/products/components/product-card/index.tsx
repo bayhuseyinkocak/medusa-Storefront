@@ -1,3 +1,4 @@
+import { TireFilters } from "@lib/util/tire-filters"
 import { HttpTypes } from "@medusajs/types"
 import ProductPreview from "@modules/products/components/product-preview"
 import TireProductCard from "@modules/products/components/tire-product-card"
@@ -10,6 +11,7 @@ type ProductCardProps = {
   categoryHandle?: string
   view?: "grid" | "list"
   isFeatured?: boolean
+  tireFilters?: TireFilters
 }
 
 export default function ProductCard({
@@ -18,11 +20,18 @@ export default function ProductCard({
   categoryHandle,
   view = "grid",
   isFeatured,
+  tireFilters,
 }: ProductCardProps) {
   const cardType = resolveProductCardType(categoryHandle)
 
   if (cardType === "tire") {
-    return <TireProductCard product={product} view={view} />
+    return (
+      <TireProductCard
+        product={product}
+        view={view}
+        tireFilters={tireFilters}
+      />
+    )
   }
 
   if (cardType === "wheel") {
