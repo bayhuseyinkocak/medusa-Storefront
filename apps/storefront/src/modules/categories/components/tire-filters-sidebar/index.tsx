@@ -226,11 +226,6 @@ export default function TireFiltersSidebar({
           </div>
         </div>
       </div>
-
-      <Text className="mt-4 text-small-regular text-ui-fg-subtle">
-        Checkboxes show only tires where the feature is true. Unchecked means no
-        filter on that feature.
-      </Text>
     </aside>
   )
 }
